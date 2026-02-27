@@ -1,0 +1,126 @@
+import React, { useState, useEffect } from 'react';
+
+// Simulated API call for autocomplete suggestions
+const fetchAutocompleteSuggestions = async (query, type) => {
+  // Replace with real API call
+  const sampleData = {
+    people: ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'].filter((name) =>
+      name.toLowerCase().includes(query.toLowerCase())
+    ),
+    posts: ['React tutorial', 'JavaScript tips', 'Travel blog', 'Music review'].filter((post) =>
+      post.toLowerCase().includes(query.toLowerCase())
+    ),
+    hashtags: ['#react', '#javascript', '#travel', '#music', '#sports'].filter((tag) =>
+      tag.toLowerCase().includes(query.toLowerCase())
+    ),
+  };
+  return new Promise((resolve) => setTimeout(() => resolve(sampleData[type] || []), 300));
+};
+
+// Simulated trending topics
+const trendingTopics = ['#react', '#javascript', '#travel', '#music', '#sports'];
+
+function SearchAndDiscovery() {
+  const [query, setQuery] = useState('');
+  const [type, setType] = useState('people');
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    let active = true;
+    fetchAutocompleteSuggestions(query, type).then((results) => {
+      if (active) setSuggestions(results);
+    });
+    return () => {
+      active = false;
+    };
+  }, [query, type]);
+
+  const handleSelectSuggestion = (suggestion) => {
+    setQuery(suggestion);
+    setShowSuggestions(false);
+    // Trigger search or navigation here
+    alert(`Search for "${suggestion}" in ${type}`);
+  };
+
+  return (
+    <div style={{ maxWidth: '600px', margin: 'auto', padding: '1rem', fontFamily: 'Arial, sans-serif' }}>
+      <h2>Search and Discovery</h2>
+
+      {/* Search bar */}
+      <div style={{ position: 'relative' }}>
+        <input
+          type="text"
+          placeholder={`Search ${type}...`}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setShowSuggestions(true);
+          }}
+          style={{ width: '100%', padding: '0.5rem', fontSize: '1rem', borderRadius: '4px', borderColor: '#ccc' }}
+        />
+        {showSuggestions && suggestions.length > 0 && (
+          <ul
+            style={{
+              position: 'absolute',
+              top: '100%',
+              left: 0,
+              right: 0,
+              backgroundColor: 'white',
+              border: '1px solid #ccc',
+              borderTop: 'none',
+              maxHeight: '150px',
+              overflowY: 'auto',
+              margin: 0,
+              padding: 0,
+              listStyle: 'none',
+              zIndex: 1000,
+            }}
+          >
+            {suggestions.map((suggestion, idx) => (
+              <li
+                key={idx}
+                onClick={() => handleSelectSuggestion(suggestion)}
+                style={{ padding: '0.5rem', cursor: 'pointer' }}
+                onMouseDown={(e) => e.preventDefault()} // Prevent input blur
+              >
+                {suggestion}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div style={{ marginTop: '0.5rem' }}>
+        <label>
+          Filter by type:{' '}
+          <select value={type} onChange={(e) => setType(e.target.value)} style={{ padding: '0.25rem' }}>
+            <option value="people">People</option>
+            <option value="posts">Posts</option>
+            <option value="hashtags">Hashtags</option>
+          </select>
+        </label>
+      </div>
+
+      {/* Trending topics */}
+      <div style={{ marginTop: '1rem' }}>
+        <h3>Trending Topics</h3>
+        <ul style={{ paddingLeft: '1rem' }}>
+          {trendingTopics.map((topic, idx) => (
+            <li key={idx} style={{ cursor: 'pointer', color: '#007bff' }} onClick={() => setQuery(topic)}>
+              {topic}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+export default SearchAndDiscovery;
+
