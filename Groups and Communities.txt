@@ -1,0 +1,97 @@
+import React, { useState } from 'react';
+
+const sampleGroups = [
+  { id: 1, name: 'React Developers', privacy: 'public' },
+  { id: 2, name: 'Travel Enthusiasts', privacy: 'private' },
+  { id: 3, name: 'Secret Book Club', privacy: 'secret' },
+];
+
+function GroupsAndCommunities() {
+  const [groups, setGroups] = useState(sampleGroups);
+  const [joinedGroups, setJoinedGroups] = useState([]);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupPrivacy, setNewGroupPrivacy] = useState('public');
+
+  const createGroup = () => {
+    if (!newGroupName.trim()) return alert('Group name required');
+    const newGroup = {
+      id: groups.length + 1,
+      name: newGroupName,
+      privacy: newGroupPrivacy,
+    };
+    setGroups([...groups, newGroup]);
+    setNewGroupName('');
+    alert(`Group "${newGroup.name}" created.`);
+  };
+
+  const joinGroup = (group) => {
+    if (joinedGroups.find((g) => g.id === group.id)) {
+      alert(`Already joined "${group.name}"`);
+      return;
+    }
+    setJoinedGroups([...joinedGroups, group]);
+    alert(`Joined group "${group.name}"`);
+  };
+
+  return (
+    <div style={{ maxWidth: 600, margin: 'auto', padding: 20 }}>
+      <h2>Groups and Communities</h2>
+
+      {/* Create Group */}
+      <div style={{ marginBottom: 20 }}>
+        <h3>Create Group</h3>
+        <input
+          type="text"
+          placeholder="Group name"
+          value={newGroupName}
+          onChange={(e) => setNewGroupName(e.target.value)}
+          style={{ padding: 8, width: '60%', marginRight: 10 }}
+        />
+        <select value={newGroupPrivacy} onChange={(e) => setNewGroupPrivacy(e.target.value)} style={{ padding: 8 }}>
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+          <option value="secret">Secret</option>
+        </select>
+        <button onClick={createGroup} style={{ marginLeft: 10, padding: '8px 16px' }}>
+          Create
+        </button>
+      </div>
+
+      {/* Available Groups */}
+      <div>
+        <h3>Available Groups</h3>
+        <ul>
+          {groups.map((group) => (
+            <li key={group.id} style={{ marginBottom: 8 }}>
+              <strong>{group.name}</strong> ({group.privacy})
+              <button
+                onClick={() => joinGroup(group)}
+                style={{ marginLeft: 10, padding: '4px 8px' }}
+              >
+                Join
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Joined Groups */}
+      <div style={{ marginTop: 20 }}>
+        <h3>Your Groups</h3>
+        {joinedGroups.length === 0 ? (
+          <p>You have not joined any groups yet.</p>
+        ) : (
+          <ul>
+            {joinedGroups.map((group) => (
+              <li key={group.id}>
+                {group.name} ({group.privacy})
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default GroupsAndCommunities;
