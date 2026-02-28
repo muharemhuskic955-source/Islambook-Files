@@ -1,0 +1,456 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body {
+                  background-color: white; /* Ensure the iframe has a white background */
+                }
+
+                
+              </style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IslamBook - Loading...</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a5632, #0d251a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .container {
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        .title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+        
+        .progress-container {
+            width: 250px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 0 auto 20px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffed4e);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .loading-text {
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+        
+        .status-text {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 5px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        
+        .progress-bar {
+            animation: loading 3s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🌙</div>
+        <div class="title">IslamBook</div>
+        <div class="subtitle">Islamic Social Network (Portable)</div>
+        
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        
+        <div class="loading-text">Initializing Islamic Social Network...</div>
+        <div class="status-text">Loading securely into memory</div>
+    </div>
+    
+    <script>
+        const progressBar = document.querySelector('.progress-bar');
+        let width = 0;
+        
+        const interval = setInterval(() => {
+            width += Math.random() * 3 + 1;
+            if (width >= 100) {
+                width = 100;
+                clearInterval(interval);
+            }
+            progressBar.style.width = width + '%';
+        }, 50);
+    </script>
+</body>
+</html>
+
+
+
+              <script>
+                              const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
+const path = require('path');
+const log = require('electron-log');
+const { autoUpdater } = require('electron-updater');
+const Store = require('electron-store');
+const fs = require('fs-extra');
+const os = require('os');
+
+// Initialize store
+const store = new Store();
+
+let mainWindow;
+let splashWindow;
+
+// Set up portable data directory
+const portableDataDir = path.join(path.dirname(app.getPath('exe')), 'islambook_data');
+if (!fs.existsSync(portableDataDir)) {
+  fs.mkdirSync(portableDataDir, { recursive: true });
+}
+
+app.setPath('userData', portableDataDir);
+app.setPath('userCache', path.join(portableDataDir, 'Cache'));
+
+function createSplashWindow() {
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    transparent: true,
+    frame: false,
+    alwaysOnTop: true,
+    resizable: false,
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true
+    }
+  });
+
+  splashWindow.loadFile('splash.html');
+  splashWindow.setBackgroundColor('#1a5632');
+}
+
+function createMainWindow() {
+  mainWindow = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    minWidth: 800,
+    minHeight: 600,
+    icon: path.join(__dirname, 'assets/icon.ico'),
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false,
+      enableRemoteModule: true,
+      webSecurity: false
+    },
+    show: false,
+    autoHideMenuBar: true
+  });
+
+  // Load embedded web app
+  const indexPath = path.join(__dirname, 'renderer', 'index.html');
+  
+  if (fs.existsSync(indexPath)) {
+    mainWindow.loadFile(indexPath);
+  } else {
+    mainWindow.loadURL('https://islambook.com/desktop');
+  }
+
+  mainWindow.setBackgroundColor('#f8f9fa');
+  mainWindow.show();
+  splashWindow.destroy();
+
+  // Handle updates
+  autoUpdater.checkForUpdatesAndNotify();
+
+  // Window events
+  mainWindow.on('closed', () => {
+    mainWindow = null;
+  });
+
+  // Create menu
+  createMenu();
+
+  // Context menu
+  const contextMenu = require('electron-context-menu');
+  contextMenu({
+    window: mainWindow,
+    labels: {
+      cut: 'Cut',
+      copy: 'Copy',
+      paste: 'Paste',
+      saveImageAs: 'Save Image As...',
+      inspect: 'Inspect Element'
+    }
+  });
+
+  return mainWindow;
+}
+
+function createMenu() {
+  const template = [
+    {
+      label: 'File',
+      submenu: [
+        { label: 'Exit', click: () => app.quit() }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { label: 'Undo', accelerator: 'CmdOrCtrl+Z', role: 'undo' },
+        { label: 'Redo', accelerator: 'Shift+CmdOrCtrl+Z', role: 'redo' },
+        { type: 'separator' },
+        { label: 'Cut', accelerator: 'CmdOrCtrl+X', role: 'cut' },
+        { label: 'Copy', accelerator: 'CmdOrCtrl+C', role: 'copy' },
+        { label: 'Paste', accelerator: 'CmdOrCtrl+V', role: 'paste' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { label: 'Reload', accelerator: 'CmdOrCtrl+R', click: (item, focusedWindow) => focusedWindow.reload() },
+        { label: 'Toggle Developer Tools', accelerator: process.platform === 'darwin' ? 'Alt+Command+I' : 'Ctrl+Shift+I', click: (item, focusedWindow) => focusedWindow.toggleDevTools() },
+        { type: 'separator' },
+        { label: 'Actual Size', accelerator: 'CmdOrCtrl+0', role: 'resetZoom' },
+        { label: 'Zoom In', accelerator: 'CmdOrCtrl+=', role: 'zoomIn' },
+        { label: 'Zoom Out', accelerator: 'CmdOrCtrl+-', role: 'zoomOut' }
+      ]
+    },
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'About IslamBook', click: () => showAboutDialog() },
+        { label: 'Visit Website', click: () => shell.openExternal('https://islambook.com') }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
+function showAboutDialog() {
+  dialog.showMessageBox(mainWindow, {
+    type: 'info',
+    title: 'About IslamBook',
+    message: 'IslamBook - Islamic Social Network',
+    detail: `Version: ${app.getVersion()}\n\nConnecting the Muslim community through faith-based social networking.\n\n© 2026 IslamBook. All rights reserved.`,
+    buttons: ['OK']
+  });
+}
+
+// Handle app ready
+app.whenReady().then(() => {
+  createSplashWindow();
+  
+  setTimeout(() => {
+    createMainWindow();
+  }, 2000);
+
+  // Auto updater events
+  autoUpdater.on('update-available', () => {
+    mainWindow.webContents.send('update_available');
+  });
+
+  autoUpdater.on('update-downloaded', () => {
+    mainWindow.webContents.send('update_downloaded');
+  });
+});
+
+// Handle app activation
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createMainWindow();
+  }
+});
+
+// Handle app quit
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
+});
+
+// IPC Handlers
+ipcMain.handle('get-app-info', async () => {
+  return {
+    version: app.getVersion(),
+    name: app.getName(),
+    platform: process.platform,
+    portable: true,
+    userDataPath: app.getPath('userData')
+  };
+});
+
+ipcMain.handle('get-user-data', async () => {
+  return {
+    isLoggedIn: store.get('isLoggedIn', false),
+    user: store.get('user', null),
+    preferences: store.get('preferences', {})
+  };
+});
+
+ipcMain.handle('set-user-data', async (event, userData) => {
+  store.set('user', userData);
+  store.set('isLoggedIn', true);
+});
+
+ipcMain.handle('logout', async () => {
+  store.delete('user');
+  store.set('isLoggedIn', false);
+});
+
+ipcMain.handle('show-message-box', async (event, options) => {
+  return await dialog.showMessageBox(mainWindow, options);
+});
+
+ipcMain.handle('open-external-url', async (event, url) => {
+  return await shell.openExternal(url);
+});
+
+ipcMain.handle('get-prayer-times', async (event, { lat, lng }) => {
+  return {
+    fajr: '05:30 AM',
+    dhuhr: '12:15 PM',
+    asr: '03:45 PM',
+    maghrib: '06:30 PM',
+    isha: '08:15 PM'
+  };
+});
+
+#!/usr/bin/env node
+
+const { execSync } = require('child_process');
+const fs = require('fs-extra');
+const path = require('path');
+
+console.log('🌙 Building IslamBook Standalone EXE...\n');
+
+async function build() {
+  try {
+    // Create required directories
+    await fs.ensureDir('assets');
+    await fs.ensureDir('renderer');
+    await fs.ensureDir('dist');
+
+    // Create placeholder files if they don't exist
+    if (!await fs.pathExists('assets/icon.ico')) {
+      console.log('⚠️  Warning: icon.ico not found. Using placeholder.');
+      // Create a simple placeholder - you need to add a real icon
+      await fs.writeFile('assets/icon.ico', Buffer.from('PLACEHOLDER ICON - ADD REAL ICO FILE', 'utf8'));
+    }
+
+    // Create basic renderer
+    if (!await fs.pathExists('renderer/index.html')) {
+      const basicHtml = `<!DOCTYPE html>
+<html>
+<head>
+    <title>IslamBook - Loading...</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #1a5632, #0d251a); 
+            color: white; 
+            text-align: center; 
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🌙 IslamBook</h1>
+    <p>Islamic Social Network Desktop</p>
+    <p>Loading...</p>
+</body>
+</html>`;
+      await fs.writeFile('renderer/index.html', basicHtml);
+    }
+
+    console.log('📦 Building Electron app for Windows...');
+    
+    const buildCommand = `npx electron-packager . IslamBook --platform=win32 --arch=x64 --out=dist --overwrite --asar --icon=assets/icon.ico --app-version=1.0.0 --build-version=1.0.0 --win32metadata.CompanyName="IslamBook" --win32metadata.FileDescription="Islamic Social Network" --win32metadata.ProductName="IslamBook" --prune=true`;
+    
+    execSync(buildCommand, { 
+      stdio: 'inherit',
+      env: { ...process.env, ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: 'true' }
+    });
+
+    console.log('\n✅ Build completed successfully!');
+    console.log('📁 Your EXE is located in:');
+    console.log(`   ${path.join(__dirname, 'dist', 'IslamBook-win32-x64')}`);
+    console.log('\n💡 To run the app:');
+    console.log(`   Navigate to the folder above and run: IslamBook.exe`);
+
+  } catch (error) {
+    console.error('❌ Build failed:', error.message);
+    console.error('\n💡 Troubleshooting tips:');
+    console.error('   - Make sure Node.js is installed');
+    console.error('   - Check that all dependencies are installed (npm install)');
+    console.error('   - Ensure icon.ico exists in assets/ folder');
+    console.error('   - Try running as Administrator');
+    process.exit(1);
+  }
+}
+
+build();
+
+
+              </script>
+                        </body>
+                        </html>
+                    
